@@ -1,29 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3">
+    <meta name="description" content="Desert Nomad - An endless runner game where a lone traveler navigates through dynamic desert weather conditions">
+    <meta name="keywords" content="game, endless runner, desert, HTML5, canvas">
+    <meta name="author" content="Rishi">
     <title>Desert Nomad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="game-canvas"></canvas>
+    <div id="game-container" role="application" >
+        <canvas id="game-canvas" aria-hidden="true"></canvas>
 
-        <div id="hud">
-            <div id="score-container">
+        <div id="hud" aria-live="off">
+            <div id="score-container" role="status">
                 <span id="score-label">DISTANCE</span>
                 <span id="score">0</span>
                 <span id="score-unit">m</span>
             </div>
-            <div id="weather-indicator">
+            <div id="weather-indicator" role="status">
                 <span id="weather-icon">☀️</span>
                 <span id="weather-text">Clear</span>
             </div>
-            
+            <div id="weather-announcement" aria-live="polite" class="sr-only"></div>
             <button id="pause-btn">❚❚</button>
         </div>
+
+        <div id="weather-banner"></div>
 
         <div id="start-screen" class="overlay active">
             <div class="overlay-content">
@@ -50,6 +57,16 @@
         <div id="pause-screen" class="overlay">
             <div class="overlay-content">
                 <h2>Paused</h2>
+                <div class="settings-panel">
+                    <label class="setting-row">
+                        <span>Sound</span>
+                        <button id="sound-toggle" class="toggle-btn" aria-pressed="true">ON</button>
+                    </label>
+                    <label class="setting-row">
+                        <span>Reduced Effects</span>
+                        <button id="effects-toggle" class="toggle-btn" aria-pressed="false">OFF</button>
+                    </label>
+                </div>
                 <button id="resume-btn" class="primary-btn">Resume</button>
             </div>
         </div>
@@ -73,6 +90,10 @@
                 </button>
                 <p class="hint">Tap or Press SPACE to restart</p>
             </div>
+        </div>
+        <div id="mobile-controls" aria-hidden="true">
+            <button id="jump-btn" class="mobile-btn">JUMP</button>
+            <button id="duck-btn" class="mobile-btn">DUCK</button>
         </div>
     </div>
 
