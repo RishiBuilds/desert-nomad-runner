@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Desert Nomad</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <div id="hud">
+      <div id="score-container">
+        <span id="score-label">DISTANCE</span>
+        <span id="score">0</span>
+        <span id="score-unit">m</span>
+      </div>
+
+      <button id="pause-btn">❚❚</button>
+    </div>
+
+    <div id="start-screen" class="overlay active">
+      <div class="overlay-content">
+        <h1 class="game-title">Desert Nomad</h1>
+        <p class="game-subtitle">Survive the endless desert</p>
+
+        <button id="start-btn" class="primary-btn">
+          <span>Start Journey</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="pause-screen" class="overlay">
+      <div class="overlay-content">
+        <h2>Paused</h2>
+        <button id="resume-btn" class="primary-btn">Resume</button>
+      </div>
+    </div>
+
+    <div id="gameover-screen" class="overlay">
+      <div class="overlay-content">
+        <h2 class="gameover-title">Journey Ended</h2>
+
+        <div id="final-score-container">
+          <span id="final-score">0</span>
+          <span class="final-score-unit">m</span>
+        </div>
+
+        <button id="restart-btn" class="primary-btn">
+          <span>Try Again</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
