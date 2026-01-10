@@ -1,28 +1,17 @@
 'use strict';
-
-// =============================================================================
-// DESERT NOMAD - Minimal Stickman Edition
-// A clean, beginner-friendly endless runner with meaningful weather effects
-// =============================================================================
-
-// -----------------------------------------------------------------------------
-// CONFIGURATION
-// All game constants in one place for easy tuning
-// -----------------------------------------------------------------------------
 const CONFIG = {
-    // Physics
     GRAVITY: 0.55,
     JUMP_FORCE: -13,
     DOUBLE_JUMP_FORCE: -10,
-    GROUND_Y_OFFSET: 100,       // Distance from bottom of screen to ground
-    COYOTE_TIME: 100,           // Grace period for jumping after leaving ground (ms)
+    GROUND_Y_OFFSET: 100,       
+    COYOTE_TIME: 100,           
 
     // Speed progression
     INITIAL_SPEED: 4,
     MAX_SPEED: 14,
     SPEED_INCREMENT: 0.0003,
 
-    // Difficulty tiers - step-based progression feels fairer than linear
+    // Difficulty tiers
     DIFFICULTY_TIERS: [
         { score: 0, speedMult: 1.0, label: 'Calm' },
         { score: 500, speedMult: 1.15, label: 'Easy' },
@@ -42,7 +31,7 @@ const CONFIG = {
     STICKMAN: {
         HEAD_RADIUS: 8,
         LINE_WIDTH: 3,
-        COLOR: '#1A1208',           // Dark brown - readable against sand
+        COLOR: '#1A1208',          
         LEG_LENGTH: 20,
         ARM_LENGTH: 15
     },
@@ -53,39 +42,39 @@ const CONFIG = {
     FIRST_OBSTACLE_DELAY: 250,
 
     // Weather timing
-    WEATHER_CHANGE_INTERVAL: 22000,  // Time between weather changes
-    WEATHER_GRACE_PERIOD: 6000,      // Calm period at game start
-    WEATHER_RAMP_TIME: 25000,        // Time to reach full intensity
+    WEATHER_CHANGE_INTERVAL: 22000,  
+    WEATHER_GRACE_PERIOD: 6000,      
+    WEATHER_RAMP_TIME: 25000,     
 
-    // Weather gameplay effects - EACH MUST CHANGE HOW YOU PLAY
+    // Weather gameplay effects 
     WEATHER_EFFECTS: {
         CLEAR: {
-            jumpMod: 1.0,           // Normal jump height
-            gravityMod: 1.0,        // Normal gravity
-            windForce: 0,           // No horizontal push
-            speedMod: 1.0,          // Normal leg speed
-            visibility: 1.0         // Full visibility
+            jumpMod: 1.0,           
+            gravityMod: 1.0,        
+            windForce: 0,          
+            speedMod: 1.0,        
+            visibility: 1.0        
         },
         LOO: {
-            jumpMod: 0.95,          // Slightly reduced jump
-            gravityMod: 0.9,        // Floatier (wind lifts you)
-            windForce: 4.0,         // Strong horizontal push - FORCES TIMING CHANGE
-            speedMod: 1.1,          // Faster leg movement (hurrying through wind)
+            jumpMod: 0.95,          
+            gravityMod: 0.9,        
+            windForce: 4.0,        
+            speedMod: 1.1,          
             visibility: 0.85
         },
         HEATWAVE: {
-            jumpMod: 0.85,          // Weaker jumps (exhaustion)
-            gravityMod: 1.15,       // Heavier feel (fatigue)
+            jumpMod: 0.85,          
+            gravityMod: 1.15,       
             windForce: 0.5,
-            speedMod: 0.7,          // Slower legs (exhaustion visual)
+            speedMod: 0.7,         
             visibility: 0.9
         },
         SANDSTORM: {
             jumpMod: 0.92,
             gravityMod: 1.0,
-            windForce: 5.5,         // Very strong push - MAJOR TIMING CHANGE
+            windForce: 5.5,         
             speedMod: 0.85,
-            visibility: 0.55        // Hard to see - FORCES EARLIER REACTIONS
+            visibility: 0.55        
         }
     },
 
@@ -120,10 +109,6 @@ const OBSTACLE_TYPE = {
     TUMBLEWEED: 'tumbleweed'
 };
 
-// -----------------------------------------------------------------------------
-// UTILITIES
-// Helper functions used throughout the game
-// -----------------------------------------------------------------------------
 const Utils = {
     // Random number between min and max
     random: (min, max) => Math.random() * (max - min) + min,
@@ -146,10 +131,7 @@ const Utils = {
     }
 };
 
-// -----------------------------------------------------------------------------
 // AUDIO MANAGER
-// Simple synthesized sound effects (no external files needed)
-// -----------------------------------------------------------------------------
 class AudioManager {
     constructor() {
         this.ctx = null;
@@ -193,10 +175,7 @@ class AudioManager {
     playWind() { this.playTone(100, 0.4, 'sawtooth', 0.03); }
 }
 
-// -----------------------------------------------------------------------------
 // INPUT HANDLER
-// Handles keyboard, touch, and mouse input
-// -----------------------------------------------------------------------------
 class InputHandler {
     constructor(game) {
         this.game = game;
@@ -272,11 +251,7 @@ class InputHandler {
     }
 }
 
-// -----------------------------------------------------------------------------
 // STICKMAN PLAYER
-// Minimal stickman with procedural animation
-// Design: Head (circle) + Body (line) + Arms (lines) + Legs (lines) + Scarf (curve)
-// -----------------------------------------------------------------------------
 class Player {
     constructor(game) {
         this.game = game;
@@ -297,12 +272,12 @@ class Player {
         this.canDoubleJump = true;
         this.timeSinceGrounded = 0;
 
-        // Animation state (procedural - uses time-based sine waves)
+        // Animation state 
         this.animTime = 0;
-        this.runCycle = 0;          // Controls leg/arm swing
-        this.jumpBend = 0;          // Pre-jump crouch (-1 to 0)
-        this.stretchFactor = 1;     // Vertical stretch during jump/land
-        this.leanAngle = 0;         // Body lean (for wind)
+        this.runCycle = 0;          
+        this.jumpBend = 0;          
+        this.stretchFactor = 1;    
+        this.leanAngle = 0;         
 
         // Calculate ground position
         const canvasH = this.game.canvas.logicalHeight || this.game.canvas.height;
@@ -310,9 +285,6 @@ class Player {
         this.y = this.groundY - this.height;
     }
 
-    // -------------------------------------------------------------------------
-    // JUMP - Affected by weather (jumpMod changes height)
-    // -------------------------------------------------------------------------
     jump() {
         const effects = this.game.weather.getEffects();
         const jumpForce = CONFIG.JUMP_FORCE * effects.jumpMod;
@@ -336,9 +308,6 @@ class Player {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // DUCK - Makes player shorter to avoid high obstacles
-    // -------------------------------------------------------------------------
     duck(isDucking) {
         if (this.isDucking === isDucking) return;
         this.isDucking = isDucking;
@@ -353,9 +322,6 @@ class Player {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // UPDATE - Physics and animation each frame
-    // -------------------------------------------------------------------------
     update(deltaTime) {
         const effects = this.game.weather.getEffects();
         const dt = deltaTime / 16.67; // Normalize to 60fps
@@ -375,7 +341,6 @@ class Player {
             this.timeSinceGrounded += deltaTime;
 
             // --- WIND FORCE (LOO/SANDSTORM push player) ---
-            // This forces earlier/later jumps as player position shifts
             this.velocityX = effects.windForce * 0.35;
         } else {
             this.velocityX = 0;
@@ -422,10 +387,7 @@ class Player {
         this.stretchFactor = Utils.lerp(this.stretchFactor, 1, 0.12);
     }
 
-    // -------------------------------------------------------------------------
     // DRAW - Render the stickman
-    // All procedural, no sprites
-    // -------------------------------------------------------------------------
     draw(ctx) {
         const cfg = CONFIG.STICKMAN;
 
@@ -459,10 +421,6 @@ class Player {
         ctx.restore();
     }
 
-    // -------------------------------------------------------------------------
-    // DRAW RUNNING POSE
-    // Procedural animation using sine waves
-    // -------------------------------------------------------------------------
     drawRunning(ctx, cfg) {
         const x = this.x + this.width / 2;  // Center of character
         const baseY = this.y;
@@ -548,9 +506,7 @@ class Player {
         ctx.stroke();
     }
 
-    // -------------------------------------------------------------------------
-    // HITBOX - For collision detection
-    // -------------------------------------------------------------------------
+    // HITBOX 
     getHitbox() {
         const p = CONFIG.HITBOX_PADDING;
         return {
@@ -562,10 +518,7 @@ class Player {
     }
 }
 
-// -----------------------------------------------------------------------------
 // OBSTACLE
-// Simple obstacle types that require jumping or ducking
-// -----------------------------------------------------------------------------
 class Obstacle {
     constructor(type, x, groundY) {
         this.type = type;
@@ -684,10 +637,7 @@ class Obstacle {
     }
 }
 
-// -----------------------------------------------------------------------------
 // OBSTACLE MANAGER
-// Handles spawning and updating all obstacles
-// -----------------------------------------------------------------------------
 class ObstacleManager {
     constructor(game) {
         this.game = game;
@@ -772,10 +722,7 @@ class ObstacleManager {
     }
 }
 
-// -----------------------------------------------------------------------------
 // WEATHER SYSTEM
-// Each weather state MUST affect gameplay, not just visuals
-// -----------------------------------------------------------------------------
 class WeatherSystem {
     constructor(game) {
         this.game = game;
@@ -819,7 +766,7 @@ class WeatherSystem {
         this.canvas.classList.remove('sandstorm', 'heatwave');
     }
 
-    // Get intensity (ramps up from 0 after grace period)
+    // Get intensity 
     getIntensity() {
         if (this.gameTime < CONFIG.WEATHER_GRACE_PERIOD) return 0;
         const elapsed = this.gameTime - CONFIG.WEATHER_GRACE_PERIOD;
@@ -846,7 +793,7 @@ class WeatherSystem {
         this.gameTime += deltaTime;
         this.weatherTimer += deltaTime;
 
-        // Change weather after interval (only after grace period)
+        // Change weather after interval 
         if (this.weatherTimer >= CONFIG.WEATHER_CHANGE_INTERVAL &&
             this.gameTime > CONFIG.WEATHER_GRACE_PERIOD) {
             this.changeWeather();
@@ -1037,10 +984,7 @@ class WeatherSystem {
     }
 }
 
-// -----------------------------------------------------------------------------
 // RENDERER
-// Draws the background environment
-// -----------------------------------------------------------------------------
 class Renderer {
     constructor(game) {
         this.game = game;
@@ -1121,9 +1065,6 @@ class Renderer {
     }
 }
 
-// -----------------------------------------------------------------------------
-// GAME - Main controller
-// -----------------------------------------------------------------------------
 class Game {
     constructor() {
         this.canvas = document.getElementById('game-canvas');
@@ -1330,10 +1271,8 @@ class Game {
         this.scoreDisplay.textContent = Math.floor(this.score);
     }
 }
-
-// -----------------------------------------------------------------------------
-// INITIALIZATION
-// -----------------------------------------------------------------------------
+ 
+// init
 document.addEventListener('DOMContentLoaded', () => {
     window.game = new Game();
 });
