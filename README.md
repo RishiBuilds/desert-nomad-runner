@@ -111,7 +111,7 @@ cd desert-nomad
 
 # Open in browser
 open index.html
-
+```
 ---
 
 ## Future Enhancements
