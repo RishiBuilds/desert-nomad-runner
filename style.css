@@ -41,6 +41,9 @@ body {
 }
 
 #game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
   touch-action: none;
 }
 
@@ -53,12 +56,6 @@ body {
   overflow: hidden;
   background: var(--sand-light);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-#game-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 #hud {
@@ -139,6 +136,7 @@ body {
   color: var(--ui-light);
   font-size: 1rem;
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 #pause-btn:hover {
@@ -305,12 +303,14 @@ body {
   font-weight: 700;
   color: var(--ui-accent);
   text-shadow: 0 0 30px rgba(255, 159, 67, 0.5);
+  line-height: 1;
 }
 
 .final-score-unit {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: var(--sand-light);
-  opacity: 0.7;
+  opacity: 0.8;
+  margin-top: 0.25rem;
 }
 
 #high-score-container {
@@ -511,23 +511,26 @@ button:focus-visible {
   width: 80px;
   height: 80px;
   border: none;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(10px);
   border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--ui-light);
   font-family: var(--font-primary);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
   cursor: pointer;
-  opacity: 0.7;
+  opacity: 0.8;
   transition: all var(--transition-fast);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .mobile-btn:active {
   opacity: 1;
   transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 20px rgba(255, 159, 67, 0.3);
 }
 
 #weather-banner {

@@ -60,25 +60,25 @@ const CONFIG = {
             visibility: 1.0
         },
         LOO: {
-            jumpMod: 0.97,          
-            gravityMod: 0.95,       
-            windForce: 2.5,         
-            speedMod: 1.05,        
-            visibility: 0.9         
+            jumpMod: 0.97,
+            gravityMod: 0.95,
+            windForce: 2.5,
+            speedMod: 1.05,
+            visibility: 0.9
         },
         HEATWAVE: {
-            jumpMod: 0.9,           
-            gravityMod: 1.08,       
+            jumpMod: 0.9,
+            gravityMod: 1.08,
             windForce: 0.3,
-            speedMod: 0.8,       
-            visibility: 0.95        
+            speedMod: 0.8,
+            visibility: 0.95
         },
         SANDSTORM: {
-            jumpMod: 0.95,          
+            jumpMod: 0.95,
             gravityMod: 1.0,
-            windForce: 3.5,        
-            speedMod: 0.75,      
-            visibility: 0.65        
+            windForce: 3.5,
+            speedMod: 0.75,
+            visibility: 0.65
         }
     },
 
@@ -111,7 +111,7 @@ const CONFIG = {
         GROUND_NOISE_AMPLITUDE: 3
     },
 
-    // Debug mode 
+    // Debug mode - shows distance overlay when true
     DEBUG_MODE: false
 };
 
@@ -201,6 +201,7 @@ class InputHandler {
     constructor(game) {
         this.game = game;
         this.keys = {};
+        this.touchStartY = null;
         this.bindEvents();
     }
 
@@ -233,10 +234,41 @@ class InputHandler {
 
         // Touch and mouse
         const canvas = document.getElementById('game-canvas');
+
+        // Touch with swipe down detection for ducking
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.handleAction();
+            this.touchStartY = e.touches[0].clientY;
+            // Only jump on tap if game is playing - don't auto-duck on touch start
+            if (this.game.state === 'start' || this.game.state === 'gameover') {
+                this.handleAction();
+            }
         }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (this.game.state !== 'playing' || this.touchStartY === null) return;
+            e.preventDefault();
+            const touchY = e.touches[0].clientY;
+            const deltaY = touchY - this.touchStartY;
+
+            // Swipe down threshold (30px) to trigger duck
+            if (deltaY > 30) {
+                this.game.player.duck(true);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            // If it was a quick tap (not swipe), treat as jump
+            if (this.game.state === 'playing' && !this.game.player.isDucking) {
+                this.game.player.jump();
+            }
+            // Always release duck on touch end
+            if (this.game.state === 'playing') {
+                this.game.player.duck(false);
+            }
+            this.touchStartY = null;
+        }, { passive: false });
+
         canvas.addEventListener('mousedown', () => this.handleAction());
 
         // Mobile buttons
@@ -451,6 +483,11 @@ class Player {
             if (p.life <= 0 || p.alpha < 0.05) {
                 this.dustParticles.splice(i, 1);
             }
+        }
+
+        // Safety cap to prevent memory issues
+        if (this.dustParticles.length > CONFIG.VISUALS.DUST_PARTICLES_MAX * 2) {
+            this.dustParticles = this.dustParticles.slice(-CONFIG.VISUALS.DUST_PARTICLES_MAX);
         }
     }
 
