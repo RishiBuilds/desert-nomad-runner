@@ -158,7 +158,6 @@ cd desert-nomad
 
 # Open in browser (macOS)
 open index.html
-<<<<<<< HEAD
 
 # Or on Windows
 start index.html
