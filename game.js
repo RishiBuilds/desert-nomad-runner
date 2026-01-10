@@ -3,21 +3,20 @@ const CONFIG = {
     GRAVITY: 0.55,
     JUMP_FORCE: -13,
     DOUBLE_JUMP_FORCE: -10,
-    GROUND_Y_OFFSET: 100,       
-    COYOTE_TIME: 100,           
+    GROUND_Y_OFFSET: 100,
+    COYOTE_TIME: 120,         
 
-    // Speed progression
-    INITIAL_SPEED: 4,
-    MAX_SPEED: 14,
-    SPEED_INCREMENT: 0.0003,
+    INITIAL_SPEED: 3.5,          
+    MAX_SPEED: 12,           
+    SPEED_INCREMENT: 0.00015,    
 
-    // Difficulty tiers
+    // Difficulty tiers based on score
     DIFFICULTY_TIERS: [
-        { score: 0, speedMult: 1.0, label: 'Calm' },
-        { score: 500, speedMult: 1.15, label: 'Easy' },
-        { score: 1500, speedMult: 1.3, label: 'Medium' },
-        { score: 3000, speedMult: 1.5, label: 'Hard' },
-        { score: 5000, speedMult: 1.75, label: 'Expert' }
+        { score: 0, speedMult: 1.0, label: 'Calm' },       // 0-1000: Learn basics
+        { score: 1000, speedMult: 1.1, label: 'Easy' },    // 1000-2500: Gentle rise
+        { score: 2500, speedMult: 1.2, label: 'Medium' },  // 2500-4500: Building skill
+        { score: 4500, speedMult: 1.35, label: 'Hard' },   // 4500-7000: Real challenge
+        { score: 7000, speedMult: 1.5, label: 'Expert' }   // 7000+: Endgame
     ],
 
     // Player dimensions
@@ -25,56 +24,61 @@ const CONFIG = {
     PLAYER_WIDTH: 40,
     PLAYER_HEIGHT: 60,
     DUCK_HEIGHT: 30,
-    HITBOX_PADDING: 8,
+    HITBOX_PADDING: 10,          
 
     // Stickman visual settings
     STICKMAN: {
         HEAD_RADIUS: 8,
         LINE_WIDTH: 3,
-        COLOR: '#1A1208',          
+        COLOR: '#1A1208',
         LEG_LENGTH: 20,
         ARM_LENGTH: 15
     },
 
-    // Obstacle spawning
-    MIN_OBSTACLE_GAP: 400,
-    MAX_OBSTACLE_GAP: 700,
-    FIRST_OBSTACLE_DELAY: 250,
+    // OBSTACLE SPAWNING 
+    MIN_OBSTACLE_GAP: 550,      
+    MAX_OBSTACLE_GAP: 900,       
+    FIRST_OBSTACLE_DELAY: 500,   
 
-    // Weather timing
-    WEATHER_CHANGE_INTERVAL: 22000,  
-    WEATHER_GRACE_PERIOD: 6000,      
-    WEATHER_RAMP_TIME: 25000,     
+    EARLY_GAME_DURATION: 30000,  
+    EARLY_GAME_GAP_BONUS: 150,   
+    EARLY_GAME_SPEED_MULT: 0.85, 
 
-    // Weather gameplay effects 
+    MAX_CONSECUTIVE_HARD: 1,     
+    RECOVERY_GAP_AFTER_HARD: 200,
+
+    WEATHER_CHANGE_INTERVAL: 28000,  
+    WEATHER_GRACE_PERIOD: 10000,     
+    WEATHER_RAMP_TIME: 35000,        
+
     WEATHER_EFFECTS: {
         CLEAR: {
-            jumpMod: 1.0,           
-            gravityMod: 1.0,        
-            windForce: 0,          
-            speedMod: 1.0,        
-            visibility: 1.0        
+            jumpMod: 1.0,
+            gravityMod: 1.0,
+            windForce: 0,
+            speedMod: 1.0,
+            visibility: 1.0
         },
         LOO: {
-            jumpMod: 0.95,          
-            gravityMod: 0.9,        
-            windForce: 4.0,        
-            speedMod: 1.1,          
-            visibility: 0.85
+            jumpMod: 0.97,          // Gentler jump reduction
+            gravityMod: 0.95,       // Less floaty
+            windForce: 2.5,         // 37% weaker wind (was 4.0)
+            speedMod: 1.05,         // Barely faster
+            visibility: 0.9         // Better visibility
         },
         HEATWAVE: {
-            jumpMod: 0.85,          
-            gravityMod: 1.15,       
-            windForce: 0.5,
-            speedMod: 0.7,         
-            visibility: 0.9
+            jumpMod: 0.9,           // Less punishing jumps
+            gravityMod: 1.08,       // Gentler gravity increase
+            windForce: 0.3,
+            speedMod: 0.8,          // Slower = more readable
+            visibility: 0.95        // Clearer view
         },
         SANDSTORM: {
-            jumpMod: 0.92,
+            jumpMod: 0.95,          // Minor jump impact
             gravityMod: 1.0,
-            windForce: 5.5,         
-            speedMod: 0.85,
-            visibility: 0.55        
+            windForce: 3.5,         // 36% reduced wind (was 5.5)
+            speedMod: 0.75,         // Compensate visibility with slower speed
+            visibility: 0.65        // 18% better visibility (was 0.55)
         }
     },
 
@@ -91,7 +95,8 @@ const CONFIG = {
         SUN: '#FFD93D'
     },
 
-    DEBUG_MODE: false
+    // Debug mode 
+    DEBUG_MODE: false  // Set to true for balance validation
 };
 
 // Weather state names
@@ -274,10 +279,10 @@ class Player {
 
         // Animation state 
         this.animTime = 0;
-        this.runCycle = 0;          
-        this.jumpBend = 0;          
-        this.stretchFactor = 1;    
-        this.leanAngle = 0;         
+        this.runCycle = 0;
+        this.jumpBend = 0;
+        this.stretchFactor = 1;
+        this.leanAngle = 0;
 
         // Calculate ground position
         const canvasH = this.game.canvas.logicalHeight || this.game.canvas.height;
@@ -462,7 +467,7 @@ class Player {
         ctx.lineTo(x + 8 - armSwing * 0.5, shoulderY + cfg.ARM_LENGTH);
         ctx.stroke();
 
-        // 4. LEGS (thin lines with run cycle)
+        // 4. LEGS 
         // Back leg
         ctx.beginPath();
         ctx.moveTo(x, hipY);
@@ -476,10 +481,7 @@ class Player {
         ctx.stroke();
     }
 
-    // -------------------------------------------------------------------------
     // DRAW DUCKING POSE
-    // Compact crouch
-    // -------------------------------------------------------------------------
     drawDucking(ctx, cfg) {
         const x = this.x + this.width / 2;
         const baseY = this.y;
@@ -562,7 +564,16 @@ class Obstacle {
         }
     }
 
-    draw(ctx) {
+    draw(ctx, visibility = 1) {
+        // SAFETY FEATURE
+        if (visibility < 0.75) {
+            ctx.save();
+            ctx.shadowColor = '#FFCC00';
+            ctx.shadowBlur = 8 * (1 - visibility); // Stronger glow = worse visibility
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
         switch (this.type) {
             case OBSTACLE_TYPE.CACTUS:
                 this.drawCactus(ctx);
@@ -573,6 +584,10 @@ class Obstacle {
             case OBSTACLE_TYPE.TUMBLEWEED:
                 this.drawTumbleweed(ctx);
                 break;
+        }
+
+        if (visibility < 0.75) {
+            ctx.restore();
         }
     }
 
@@ -645,6 +660,19 @@ class ObstacleManager {
         this.spawnTimer = 0;
         this.nextSpawnDistance = CONFIG.FIRST_OBSTACLE_DELAY;
         this.currentTier = CONFIG.DIFFICULTY_TIERS[0];
+
+        // Tracking for fair spawning
+        this.lastObstacleType = null;
+        this.consecutiveHardCount = 0;
+        this.totalSpawned = 0;
+        this.gameStartTime = 0;
+
+        // Stats for debug validation
+        this.spawnStats = {
+            rock: 0,
+            cactus: 0,
+            tumbleweed: 0
+        };
     }
 
     reset() {
@@ -652,6 +680,11 @@ class ObstacleManager {
         this.spawnTimer = 0;
         this.nextSpawnDistance = CONFIG.FIRST_OBSTACLE_DELAY;
         this.currentTier = CONFIG.DIFFICULTY_TIERS[0];
+        this.lastObstacleType = null;
+        this.consecutiveHardCount = 0;
+        this.totalSpawned = 0;
+        this.gameStartTime = Date.now();
+        this.spawnStats = { rock: 0, cactus: 0, tumbleweed: 0 };
     }
 
     getDifficultyTier() {
@@ -662,52 +695,153 @@ class ObstacleManager {
         return tier;
     }
 
+    // Check if we're in early game (first 30 seconds)
+    isEarlyGame() {
+        const elapsed = Date.now() - this.gameStartTime;
+        return elapsed < CONFIG.EARLY_GAME_DURATION;
+    }
+
+    // Get game phase for debug display
+    getGamePhase() {
+        const elapsed = Date.now() - this.gameStartTime;
+        if (elapsed < CONFIG.EARLY_GAME_DURATION) return 'EARLY';
+        if (this.game.score < 2500) return 'MID';
+        return 'LATE';
+    }
+
     update(deltaTime) {
-        const gameSpeed = this.game.gameSpeed;
+        // Apply early game speed modifier for obstacles
+        let effectiveSpeed = this.game.gameSpeed;
+        if (this.isEarlyGame()) {
+            effectiveSpeed *= CONFIG.EARLY_GAME_SPEED_MULT;
+        }
+
         const groundY = (this.game.canvas.logicalHeight || this.game.canvas.height)
             - CONFIG.GROUND_Y_OFFSET;
 
-        this.spawnTimer += gameSpeed;
+        this.spawnTimer += effectiveSpeed;
         this.currentTier = this.getDifficultyTier();
 
-        // Spawn new obstacles
+        // Spawn new obstacles when timer exceeds gap
         if (this.spawnTimer >= this.nextSpawnDistance) {
             this.spawnObstacle(groundY);
             this.spawnTimer = 0;
-
-            // Calculate next spawn distance
-            const reduction = (this.currentTier.speedMult - 1) * 40;
-            this.nextSpawnDistance = Utils.randomInt(
-                Math.max(300, CONFIG.MIN_OBSTACLE_GAP - reduction),
-                Math.max(450, CONFIG.MAX_OBSTACLE_GAP - reduction)
-            );
+            this.calculateNextSpawnDistance();
         }
 
-        // Update obstacles
+        // Update all obstacles
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
-            this.obstacles[i].update(gameSpeed, deltaTime);
+            this.obstacles[i].update(effectiveSpeed, deltaTime);
             if (!this.obstacles[i].active) {
                 this.obstacles.splice(i, 1);
             }
         }
     }
 
-    spawnObstacle(groundY) {
-        const types = [OBSTACLE_TYPE.CACTUS, OBSTACLE_TYPE.ROCK];
+    // SPAWN DISTANCE CALCULATION
+    calculateNextSpawnDistance() {
+        // Base gap from config
+        let minGap = CONFIG.MIN_OBSTACLE_GAP;
+        let maxGap = CONFIG.MAX_OBSTACLE_GAP;
 
-        // Add tumbleweeds at higher scores
-        if (this.game.score >= 1200) {
+        // 1. Early game bonus
+        if (this.isEarlyGame()) {
+            minGap += CONFIG.EARLY_GAME_GAP_BONUS;
+            maxGap += CONFIG.EARLY_GAME_GAP_BONUS;
+        }
+
+        // 2. Difficulty reduction 
+        const reduction = Math.min(100, (this.currentTier.speedMult - 1) * 30);
+        minGap = Math.max(450, minGap - reduction);  // Never below 450
+        maxGap = Math.max(650, maxGap - reduction);  // Never below 650
+
+        // 3. Recovery gap after difficult obstacles
+        if (this.isHardObstacle(this.lastObstacleType)) {
+            minGap += CONFIG.RECOVERY_GAP_AFTER_HARD;
+        }
+
+        this.nextSpawnDistance = Utils.randomInt(minGap, maxGap);
+    }
+
+    // =========================================================================
+    // OBSTACLE TYPE DETERMINATION
+    // Gradual introduction of obstacle types for learnability
+    // =========================================================================
+    getAvailableObstacleTypes() {
+        const score = this.game.score;
+        const types = [];
+
+        // ROCKS: Always available - the easiest obstacle (simple jump)
+        types.push(OBSTACLE_TYPE.ROCK);
+
+        // CACTI: Introduce after score 800 (player understands jumping)
+        // Why 800? Player has survived ~25-30 seconds and cleared ~10 obstacles
+        if (score >= 800) {
+            types.push(OBSTACLE_TYPE.CACTUS);
+        }
+
+        // TUMBLEWEEDS: Introduce after score 3000 (requires ducking skill)
+        // Why 3000? Player is in "Medium" tier and ready for new mechanics
+        // Also requires NOT being in early game phase
+        if (score >= 3000 && !this.isEarlyGame()) {
             types.push(OBSTACLE_TYPE.TUMBLEWEED);
         }
 
-        const type = types[Utils.randomInt(0, types.length - 1)];
+        return types;
+    }
+
+    // Determine if an obstacle type is "hard" (requires specific reaction)
+    isHardObstacle(type) {
+        // Tumbleweeds require ducking - a different input than jumping
+        // Tall cacti require well-timed jumps
+        return type === OBSTACLE_TYPE.TUMBLEWEED;
+    }
+
+    spawnObstacle(groundY) {
+        const availableTypes = this.getAvailableObstacleTypes();
+
+        // Select type, but prevent back-to-back hard obstacles
+        let selectedType = availableTypes[Utils.randomInt(0, availableTypes.length - 1)];
+
+        // FAIRNESS CHECK: Prevent consecutive hard obstacles
+        if (this.isHardObstacle(selectedType) && this.consecutiveHardCount >= CONFIG.MAX_CONSECUTIVE_HARD) {
+            // Force an easier obstacle
+            const easyTypes = availableTypes.filter(t => !this.isHardObstacle(t));
+            if (easyTypes.length > 0) {
+                selectedType = easyTypes[Utils.randomInt(0, easyTypes.length - 1)];
+            }
+        }
+
+        // Track consecutive hard obstacles
+        if (this.isHardObstacle(selectedType)) {
+            this.consecutiveHardCount++;
+        } else {
+            this.consecutiveHardCount = 0;
+        }
+
+        // Create and spawn the obstacle
         const x = (this.game.canvas.logicalWidth || this.game.canvas.width) + 50;
-        this.obstacles.push(new Obstacle(type, x, groundY));
+        const obstacle = new Obstacle(selectedType, x, groundY);
+
+        // During early game, reduce height of tall cacti for easier jumps
+        if (this.isEarlyGame() && selectedType === OBSTACLE_TYPE.CACTUS) {
+            obstacle.height = Math.min(obstacle.height, 50);
+            obstacle.y = groundY - obstacle.height;
+        }
+
+        this.obstacles.push(obstacle);
+
+        // Update tracking
+        this.lastObstacleType = selectedType;
+        this.totalSpawned++;
+        this.spawnStats[selectedType]++;
     }
 
     draw(ctx) {
+        // Pass current visibility to obstacles for safety glow effect
+        const visibility = this.game.weather ? this.game.weather.visibility : 1;
         for (const obs of this.obstacles) {
-            obs.draw(ctx);
+            obs.draw(ctx, visibility);
         }
     }
 
@@ -719,6 +853,13 @@ class ObstacleManager {
             }
         }
         return false;
+    }
+
+    // Get current spawn rate for debug display
+    getSpawnRate() {
+        const elapsed = (Date.now() - this.gameStartTime) / 1000;
+        if (elapsed < 1) return 0;
+        return (this.totalSpawned / elapsed).toFixed(2);
     }
 }
 
@@ -793,8 +934,18 @@ class WeatherSystem {
         this.gameTime += deltaTime;
         this.weatherTimer += deltaTime;
 
+        // Force end sandstorm after max duration (15 seconds)
+        // This prevents frustrating extended low-visibility periods
+        if (this.shouldEndSandstorm()) {
+            this.cycleIndex = 0; // Return to clear weather
+            this.targetWeather = WEATHER.CLEAR;
+            this.transitionProgress = 0;
+            this.sandstormStartTime = null;
+            this.showBanner('☀️ Sandstorm Passed - Visibility Restored!');
+            this.weatherTimer = 0;
+        }
         // Change weather after interval 
-        if (this.weatherTimer >= CONFIG.WEATHER_CHANGE_INTERVAL &&
+        else if (this.weatherTimer >= CONFIG.WEATHER_CHANGE_INTERVAL &&
             this.gameTime > CONFIG.WEATHER_GRACE_PERIOD) {
             this.changeWeather();
             this.weatherTimer = 0;
@@ -822,6 +973,8 @@ class WeatherSystem {
         if (newWeather === WEATHER.SANDSTORM) {
             this.showBanner('⚠️ Sandstorm Warning!');
             this.game.audio.playWarning();
+            // Start sandstorm duration timer (auto-end after 15s)
+            this.sandstormStartTime = Date.now();
         }
 
         this.targetWeather = newWeather;
@@ -829,7 +982,16 @@ class WeatherSystem {
         this.showBanner(this.getWeatherMessage(newWeather));
     }
 
+    // Check if sandstorm should end early (15 second max duration)
+    shouldEndSandstorm() {
+        if (this.currentWeather !== WEATHER.SANDSTORM) return false;
+        if (!this.sandstormStartTime) return false;
+        const elapsed = Date.now() - this.sandstormStartTime;
+        return elapsed > 15000; // 15 second max sandstorm duration
+    }
+
     getWeatherMessage(weather) {
+        // Gentler, encouraging messages
         const messages = {
             [WEATHER.CLEAR]: '☀️ Clear Skies',
             [WEATHER.LOO]: '🌬️ Loo Winds - Strong Push!',
@@ -1248,30 +1410,32 @@ class Game {
         this.player.draw(this.ctx);
         this.weather.draw(this.ctx);
 
-        // Debug overlay
         if (CONFIG.DEBUG_MODE) {
             this.drawDebug();
         }
     }
 
+    // DEBUG INFO
     drawDebug() {
         const ctx = this.ctx;
-        ctx.fillStyle = 'rgba(0,0,0,0.75)';
-        ctx.fillRect(10, 10, 200, 100);
-        ctx.fillStyle = '#0f0';
-        ctx.font = '11px monospace';
-        ctx.fillText(`Weather: ${this.weather.currentWeather}`, 20, 28);
-        ctx.fillText(`Wind: ${this.weather.windStrength.toFixed(1)}`, 20, 42);
-        ctx.fillText(`Intensity: ${(this.weather.getIntensity() * 100).toFixed(0)}%`, 20, 56);
-        ctx.fillText(`Speed: ${this.gameSpeed.toFixed(2)}`, 20, 70);
-        ctx.fillText(`FPS: ${(1000 / this.deltaTime).toFixed(0)}`, 20, 84);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(10, 10, 140, 35);
+
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText(`DISTANCE`, 20, 28);
+
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText(`${Math.floor(this.score)}m`, 95, 36);
     }
 
     updateScore() {
         this.scoreDisplay.textContent = Math.floor(this.score);
     }
 }
- 
+
 // init
 document.addEventListener('DOMContentLoaded', () => {
     window.game = new Game();
