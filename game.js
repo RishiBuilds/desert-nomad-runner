@@ -4,11 +4,11 @@ const CONFIG = {
     JUMP_FORCE: -13,
     DOUBLE_JUMP_FORCE: -10,
     GROUND_Y_OFFSET: 100,
-    COYOTE_TIME: 120,         
+    COYOTE_TIME: 120,
 
-    INITIAL_SPEED: 3.5,          
-    MAX_SPEED: 12,           
-    SPEED_INCREMENT: 0.00015,    
+    INITIAL_SPEED: 3.5,
+    MAX_SPEED: 12,
+    SPEED_INCREMENT: 0.00015,
 
     // Difficulty tiers based on score
     DIFFICULTY_TIERS: [
@@ -24,7 +24,7 @@ const CONFIG = {
     PLAYER_WIDTH: 40,
     PLAYER_HEIGHT: 60,
     DUCK_HEIGHT: 30,
-    HITBOX_PADDING: 10,          
+    HITBOX_PADDING: 10,
 
     // Stickman visual settings
     STICKMAN: {
@@ -36,20 +36,20 @@ const CONFIG = {
     },
 
     // OBSTACLE SPAWNING 
-    MIN_OBSTACLE_GAP: 550,      
-    MAX_OBSTACLE_GAP: 900,       
-    FIRST_OBSTACLE_DELAY: 500,   
+    MIN_OBSTACLE_GAP: 550,
+    MAX_OBSTACLE_GAP: 900,
+    FIRST_OBSTACLE_DELAY: 500,
 
-    EARLY_GAME_DURATION: 30000,  
-    EARLY_GAME_GAP_BONUS: 150,   
-    EARLY_GAME_SPEED_MULT: 0.85, 
+    EARLY_GAME_DURATION: 30000,
+    EARLY_GAME_GAP_BONUS: 150,
+    EARLY_GAME_SPEED_MULT: 0.85,
 
-    MAX_CONSECUTIVE_HARD: 1,     
+    MAX_CONSECUTIVE_HARD: 1,
     RECOVERY_GAP_AFTER_HARD: 200,
 
-    WEATHER_CHANGE_INTERVAL: 28000,  
-    WEATHER_GRACE_PERIOD: 10000,     
-    WEATHER_RAMP_TIME: 35000,        
+    WEATHER_CHANGE_INTERVAL: 28000,
+    WEATHER_GRACE_PERIOD: 10000,
+    WEATHER_RAMP_TIME: 35000,
 
     WEATHER_EFFECTS: {
         CLEAR: {
@@ -60,25 +60,25 @@ const CONFIG = {
             visibility: 1.0
         },
         LOO: {
-            jumpMod: 0.97,          // Gentler jump reduction
-            gravityMod: 0.95,       // Less floaty
-            windForce: 2.5,         // 37% weaker wind (was 4.0)
-            speedMod: 1.05,         // Barely faster
-            visibility: 0.9         // Better visibility
+            jumpMod: 0.97,          
+            gravityMod: 0.95,       
+            windForce: 2.5,         
+            speedMod: 1.05,        
+            visibility: 0.9         
         },
         HEATWAVE: {
-            jumpMod: 0.9,           // Less punishing jumps
-            gravityMod: 1.08,       // Gentler gravity increase
+            jumpMod: 0.9,           
+            gravityMod: 1.08,       
             windForce: 0.3,
-            speedMod: 0.8,          // Slower = more readable
-            visibility: 0.95        // Clearer view
+            speedMod: 0.8,       
+            visibility: 0.95        
         },
         SANDSTORM: {
-            jumpMod: 0.95,          // Minor jump impact
+            jumpMod: 0.95,          
             gravityMod: 1.0,
-            windForce: 3.5,         // 36% reduced wind (was 5.5)
-            speedMod: 0.75,         // Compensate visibility with slower speed
-            visibility: 0.65        // 18% better visibility (was 0.55)
+            windForce: 3.5,        
+            speedMod: 0.75,      
+            visibility: 0.65        
         }
     },
 
@@ -92,11 +92,27 @@ const CONFIG = {
         GROUND_LINE: '#CC8B3C',
         CACTUS: '#3D6B22',
         ROCK: '#8B7355',
-        SUN: '#FFD93D'
+        SUN: '#FFD93D',
+        SUN_GLOW: 'rgba(255, 217, 61, 0.3)',
+        SHADOW: 'rgba(139, 69, 19, 0.15)',
+        DUST: 'rgba(210, 180, 140, 0.6)',
+        SILHOUETTE: 'rgba(139, 115, 85, 0.25)'
+    },
+
+    // Visual effects settings
+    VISUALS: {
+        DUST_PARTICLES_MAX: 30,
+        DUST_SPAWN_RATE: 0.3,
+        CAMERA_SHAKE_INTENSITY: 2,
+        CAMERA_SHAKE_DECAY: 0.92,
+        PLAYER_SHADOW_OFFSET: 3,
+        PLAYER_SHADOW_BLUR: 4,
+        SUN_GLOW_RADIUS: 50,
+        GROUND_NOISE_AMPLITUDE: 3
     },
 
     // Debug mode 
-    DEBUG_MODE: false  // Set to true for balance validation
+    DEBUG_MODE: false
 };
 
 // Weather state names
@@ -284,6 +300,10 @@ class Player {
         this.stretchFactor = 1;
         this.leanAngle = 0;
 
+        // Visual effects
+        this.dustParticles = [];
+        this.landingImpact = 0;
+
         // Calculate ground position
         const canvasH = this.game.canvas.logicalHeight || this.game.canvas.height;
         this.groundY = canvasH - CONFIG.GROUND_Y_OFFSET;
@@ -329,76 +349,124 @@ class Player {
 
     update(deltaTime) {
         const effects = this.game.weather.getEffects();
-        const dt = deltaTime / 16.67; // Normalize to 60fps
+        const dt = deltaTime / 16.67;
 
-        // Update animation time
         this.animTime += deltaTime * 0.001;
 
-        // Ground position (in case of resize)
         this.groundY = (this.game.canvas.logicalHeight || this.game.canvas.height)
             - CONFIG.GROUND_Y_OFFSET;
 
-        // --- GRAVITY (affected by weather) ---
         const gravity = CONFIG.GRAVITY * effects.gravityMod;
 
         if (!this.isGrounded) {
             this.velocityY += gravity * dt;
             this.timeSinceGrounded += deltaTime;
-
-            // --- WIND FORCE (LOO/SANDSTORM push player) ---
             this.velocityX = effects.windForce * 0.35;
         } else {
             this.velocityX = 0;
             this.timeSinceGrounded = 0;
         }
 
-        // Apply velocities
         this.y += this.velocityY * dt;
         this.x += this.velocityX * dt;
         this.x = Utils.clamp(this.x, 50, CONFIG.PLAYER_X + 60);
 
-        // Ground collision
+        // Ground collision with landing effects
         const groundedY = this.groundY - this.height;
         if (this.y >= groundedY) {
             if (!this.isGrounded && this.velocityY > 2) {
-                // Landing impact - squash based on fall speed
                 this.stretchFactor = 1 + Math.min(0.25, this.velocityY / 25);
+                this.landingImpact = Math.min(1, this.velocityY / 15);
                 this.game.audio.playLand();
+                // Spawn landing dust burst
+                this.spawnDustBurst(5);
             }
             this.y = groundedY;
             this.velocityY = 0;
             this.isGrounded = true;
-
-            // Slowly return to default x position
             this.x = Utils.lerp(this.x, CONFIG.PLAYER_X, 0.08);
         }
 
-        // --- RUN CYCLE (speed affected by weather) ---
-        // Heatwave = slower legs (exhaustion visual)
-        // Loo = faster legs (hurrying)
+        // Run cycle with running dust
         if (this.isGrounded && !this.isDucking) {
             const runSpeed = this.game.gameSpeed * effects.speedMod;
             this.runCycle += deltaTime * runSpeed * 0.005;
+
+            // Spawn running dust particles
+            if (Math.random() < CONFIG.VISUALS.DUST_SPAWN_RATE * (runSpeed / 5)) {
+                this.spawnDustParticle();
+            }
         }
 
-        // --- STICKMAN LEAN (reacts to wind) ---
-        // Player leans into the wind - visual feedback of force
+        // Wind lean
         const targetLean = effects.windForce * 0.02;
         this.leanAngle = Utils.lerp(this.leanAngle, targetLean, 0.08);
 
-        // --- ANIMATION RECOVERY ---
-        // Smooth return to neutral
+        // Animation recovery
         this.jumpBend = Utils.lerp(this.jumpBend, 0, 0.15);
         this.stretchFactor = Utils.lerp(this.stretchFactor, 1, 0.12);
+        this.landingImpact = Utils.lerp(this.landingImpact, 0, 0.15);
+
+        // Update dust particles
+        this.updateDustParticles(deltaTime);
     }
 
-    // DRAW - Render the stickman
+    spawnDustParticle() {
+        if (this.dustParticles.length >= CONFIG.VISUALS.DUST_PARTICLES_MAX) return;
+        this.dustParticles.push({
+            x: this.x + this.width / 2 + Utils.random(-5, 5),
+            y: this.groundY - 2,
+            vx: Utils.random(-0.5, -1.5),
+            vy: Utils.random(-0.3, -0.8),
+            size: Utils.random(2, 4),
+            alpha: Utils.random(0.3, 0.5),
+            life: 1
+        });
+    }
+
+    spawnDustBurst(count) {
+        for (let i = 0; i < count; i++) {
+            if (this.dustParticles.length >= CONFIG.VISUALS.DUST_PARTICLES_MAX) break;
+            this.dustParticles.push({
+                x: this.x + this.width / 2 + Utils.random(-10, 10),
+                y: this.groundY - 2,
+                vx: Utils.random(-2, 2),
+                vy: Utils.random(-1, -2),
+                size: Utils.random(3, 6),
+                alpha: Utils.random(0.4, 0.7),
+                life: 1
+            });
+        }
+    }
+
+    updateDustParticles(deltaTime) {
+        const decay = 0.02 * (deltaTime / 16.67);
+        for (let i = this.dustParticles.length - 1; i >= 0; i--) {
+            const p = this.dustParticles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.02; // Slight gravity
+            p.life -= decay;
+            p.alpha *= 0.97;
+            if (p.life <= 0 || p.alpha < 0.05) {
+                this.dustParticles.splice(i, 1);
+            }
+        }
+    }
+
+    // DRAW - Render the stickman with shadow and dust
     draw(ctx) {
         const cfg = CONFIG.STICKMAN;
 
+        // Draw dust particles behind player
+        this.drawDustParticles(ctx);
+
+        // Draw player shadow on ground
+        this.drawShadow(ctx);
+
         ctx.save();
 
-        // Apply body lean (rotates entire stickman)
+        // Apply body lean
         const centerX = this.x + this.width / 2;
         const centerY = this.y + this.height;
         ctx.translate(centerX, centerY);
@@ -409,6 +477,12 @@ class Player {
         ctx.translate(centerX, centerY);
         ctx.scale(1 / this.stretchFactor, this.stretchFactor);
         ctx.translate(-centerX, -centerY);
+
+        // Draw with slight shadow for depth
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = CONFIG.VISUALS.PLAYER_SHADOW_BLUR;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
 
         // Setup drawing style
         ctx.strokeStyle = cfg.COLOR;
@@ -423,6 +497,38 @@ class Player {
             this.drawRunning(ctx, cfg);
         }
 
+        ctx.restore();
+    }
+
+    drawShadow(ctx) {
+        // Ellipse shadow on ground - scales with height
+        const shadowY = this.groundY;
+        const centerX = this.x + this.width / 2;
+        const heightAboveGround = shadowY - (this.y + this.height);
+        const shadowScale = Math.max(0.3, 1 - heightAboveGround / 150);
+        const shadowWidth = 20 * shadowScale;
+        const shadowHeight = 6 * shadowScale;
+        const shadowAlpha = 0.25 * shadowScale;
+
+        ctx.save();
+        ctx.fillStyle = `rgba(0, 0, 0, ${shadowAlpha})`;
+        ctx.beginPath();
+        ctx.ellipse(centerX, shadowY, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    drawDustParticles(ctx) {
+        if (this.dustParticles.length === 0) return;
+
+        ctx.save();
+        for (const p of this.dustParticles) {
+            ctx.fillStyle = CONFIG.COLORS.DUST;
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.restore();
     }
 
@@ -565,11 +671,14 @@ class Obstacle {
     }
 
     draw(ctx, visibility = 1) {
-        // SAFETY FEATURE
+        // Draw ground shadow first
+        this.drawGroundShadow(ctx);
+
+        // Safety glow for low visibility
         if (visibility < 0.75) {
             ctx.save();
             ctx.shadowColor = '#FFCC00';
-            ctx.shadowBlur = 8 * (1 - visibility); // Stronger glow = worse visibility
+            ctx.shadowBlur = 8 * (1 - visibility);
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
         }
@@ -591,9 +700,29 @@ class Obstacle {
         }
     }
 
+    drawGroundShadow(ctx) {
+        const shadowY = this.groundY;
+        const centerX = this.x + this.width / 2;
+        const shadowWidth = this.width * 0.6;
+        const shadowHeight = 4;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(centerX, shadowY, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
     drawCactus(ctx) {
         const { x, y, width: w, height: h } = this;
-        ctx.fillStyle = CONFIG.COLORS.CACTUS;
+
+        // Cactus with slight gradient
+        const cactusGrad = ctx.createLinearGradient(x, y, x + w, y);
+        cactusGrad.addColorStop(0, '#2D5A1A');
+        cactusGrad.addColorStop(0.5, CONFIG.COLORS.CACTUS);
+        cactusGrad.addColorStop(1, '#2D5A1A');
+        ctx.fillStyle = cactusGrad;
 
         // Main trunk
         ctx.fillRect(x + w * 0.35, y, w * 0.3, h);
@@ -609,7 +738,13 @@ class Obstacle {
 
     drawRock(ctx) {
         const { x, y, width: w, height: h } = this;
-        ctx.fillStyle = CONFIG.COLORS.ROCK;
+
+        // Rock with subtle gradient
+        const rockGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+        rockGrad.addColorStop(0, '#9A8465');
+        rockGrad.addColorStop(0.5, CONFIG.COLORS.ROCK);
+        rockGrad.addColorStop(1, '#6B5A45');
+        ctx.fillStyle = rockGrad;
 
         // Simple polygon rock
         ctx.beginPath();
@@ -617,6 +752,16 @@ class Obstacle {
         ctx.lineTo(x + w * 0.2, y);
         ctx.lineTo(x + w * 0.8, y);
         ctx.lineTo(x + w, y + h);
+        ctx.closePath();
+        ctx.fill();
+
+        // Subtle highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(x + w * 0.2, y);
+        ctx.lineTo(x + w * 0.5, y + 2);
+        ctx.lineTo(x + w * 0.3, y + h * 0.4);
+        ctx.lineTo(x + w * 0.15, y + h * 0.3);
         ctx.closePath();
         ctx.fill();
     }
@@ -763,10 +908,7 @@ class ObstacleManager {
         this.nextSpawnDistance = Utils.randomInt(minGap, maxGap);
     }
 
-    // =========================================================================
     // OBSTACLE TYPE DETERMINATION
-    // Gradual introduction of obstacle types for learnability
-    // =========================================================================
     getAvailableObstacleTypes() {
         const score = this.game.score;
         const types = [];
@@ -775,13 +917,11 @@ class ObstacleManager {
         types.push(OBSTACLE_TYPE.ROCK);
 
         // CACTI: Introduce after score 800 (player understands jumping)
-        // Why 800? Player has survived ~25-30 seconds and cleared ~10 obstacles
         if (score >= 800) {
             types.push(OBSTACLE_TYPE.CACTUS);
         }
 
         // TUMBLEWEEDS: Introduce after score 3000 (requires ducking skill)
-        // Why 3000? Player is in "Medium" tier and ready for new mechanics
         // Also requires NOT being in early game phase
         if (score >= 3000 && !this.isEarlyGame()) {
             types.push(OBSTACLE_TYPE.TUMBLEWEED);
@@ -934,7 +1074,6 @@ class WeatherSystem {
         this.gameTime += deltaTime;
         this.weatherTimer += deltaTime;
 
-        // Force end sandstorm after max duration (15 seconds)
         // This prevents frustrating extended low-visibility periods
         if (this.shouldEndSandstorm()) {
             this.cycleIndex = 0; // Return to clear weather
@@ -969,11 +1108,11 @@ class WeatherSystem {
         this.cycleIndex = (this.cycleIndex + 1) % this.cycle.length;
         const newWeather = this.cycle[this.cycleIndex];
 
-        // Sandstorm warning (audio + visual)
+        // Sandstorm warning 
         if (newWeather === WEATHER.SANDSTORM) {
             this.showBanner('⚠️ Sandstorm Warning!');
             this.game.audio.playWarning();
-            // Start sandstorm duration timer (auto-end after 15s)
+            // Start sandstorm duration timer 
             this.sandstormStartTime = Date.now();
         }
 
@@ -1067,6 +1206,11 @@ class WeatherSystem {
         const w = this.game.canvas.logicalWidth || ctx.canvas.width;
         const h = this.game.canvas.logicalHeight || ctx.canvas.height;
 
+        // Draw wind streaks (horizontal lines for wind visualization)
+        if (this.windStrength > 0.5) {
+            this.drawWindStreaks(ctx, w, h);
+        }
+
         // Draw wind particles
         ctx.fillStyle = 'rgba(200, 160, 100, 0.5)';
         for (const p of this.particles) {
@@ -1077,28 +1221,62 @@ class WeatherSystem {
         }
         ctx.globalAlpha = 1;
 
-        // Visibility overlay
+        // Sandstorm layered overlay (fade-in/out effect)
         if (this.visibility < 1) {
-            ctx.fillStyle = `rgba(180, 150, 100, ${(1 - this.visibility) * 0.55})`;
+            // Bottom layer - ground dust
+            const dustAlpha = (1 - this.visibility) * 0.4;
+            const dustGrad = ctx.createLinearGradient(0, h * 0.5, 0, h);
+            dustGrad.addColorStop(0, `rgba(180, 150, 100, 0)`);
+            dustGrad.addColorStop(1, `rgba(180, 150, 100, ${dustAlpha})`);
+            ctx.fillStyle = dustGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Top layer - overall visibility reduction
+            ctx.fillStyle = `rgba(160, 130, 90, ${(1 - this.visibility) * 0.35})`;
             ctx.fillRect(0, 0, w, h);
         }
 
-        // Heat shimmer
+        // Heat shimmer - ground-only wavy effect
         if (this.heatDistortion > 0.1) {
-            const time = Date.now() * 0.003;
+            const time = Date.now() * 0.002;
             ctx.save();
-            ctx.globalAlpha = this.heatDistortion * 0.2;
+            ctx.globalAlpha = this.heatDistortion * 0.15;
             ctx.strokeStyle = '#FFE4B5';
-            ctx.lineWidth = 2;
-            for (let x = 0; x < w; x += 50) {
-                const wave = Math.sin(time + x * 0.06) * 4;
+            ctx.lineWidth = 1.5;
+
+            // Draw wavy heat lines near ground
+            for (let x = 0; x < w; x += 40) {
+                const wave = Math.sin(time + x * 0.04) * 3;
+                const wave2 = Math.sin(time * 1.5 + x * 0.06) * 2;
                 ctx.beginPath();
-                ctx.moveTo(x, h - 110 + wave);
-                ctx.lineTo(x, h - 80 + wave);
+                ctx.moveTo(x, h - 115 + wave);
+                ctx.quadraticCurveTo(x + 20, h - 100 + wave2, x + 40, h - 115 + wave);
                 ctx.stroke();
             }
             ctx.restore();
         }
+    }
+
+    drawWindStreaks(ctx, w, h) {
+        const intensity = this.windStrength / 5;
+        const time = Date.now() * 0.001;
+
+        ctx.save();
+        ctx.strokeStyle = `rgba(210, 180, 140, ${intensity * 0.3})`;
+        ctx.lineWidth = 1;
+
+        // Draw horizontal wind streaks
+        for (let i = 0; i < 12; i++) {
+            const y = (h * 0.2) + (i / 12) * (h * 0.6);
+            const xOffset = (time * 200 + i * 100) % (w + 100);
+            const length = 30 + Math.sin(i) * 20;
+
+            ctx.beginPath();
+            ctx.moveTo(w - xOffset, y);
+            ctx.lineTo(w - xOffset - length, y + Math.sin(time + i) * 2);
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 
     updateUI() {
@@ -1146,15 +1324,47 @@ class WeatherSystem {
     }
 }
 
-// RENDERER
+// ENHANCED RENDERER with visual polish
 class Renderer {
     constructor(game) {
         this.game = game;
         this.scrollX = 0;
+        this.cameraShake = 0;
+        this.cameraOffsetX = 0;
+        this.cameraOffsetY = 0;
+
+        // Pre-generate distant silhouette positions for consistency
+        this.silhouettes = [];
+        for (let i = 0; i < 8; i++) {
+            this.silhouettes.push({
+                x: i * 180 + Utils.random(0, 80),
+                type: Utils.randomInt(0, 2), // 0=rock, 1=fort, 2=dune
+                height: Utils.random(20, 45),
+                width: Utils.random(30, 60)
+            });
+        }
     }
 
     update(deltaTime) {
         this.scrollX += this.game.gameSpeed;
+
+        // Update camera shake from player landing
+        if (this.game.player && this.game.player.landingImpact > 0.1) {
+            this.cameraShake = this.game.player.landingImpact * CONFIG.VISUALS.CAMERA_SHAKE_INTENSITY;
+        }
+
+        // Decay camera shake
+        this.cameraShake *= CONFIG.VISUALS.CAMERA_SHAKE_DECAY;
+        if (this.cameraShake < 0.1) this.cameraShake = 0;
+
+        // Random shake offset
+        if (this.cameraShake > 0) {
+            this.cameraOffsetX = (Math.random() - 0.5) * this.cameraShake * 2;
+            this.cameraOffsetY = (Math.random() - 0.5) * this.cameraShake;
+        } else {
+            this.cameraOffsetX = 0;
+            this.cameraOffsetY = 0;
+        }
     }
 
     draw() {
@@ -1163,7 +1373,14 @@ class Renderer {
         const h = this.game.canvas.logicalHeight || this.game.canvas.height;
         const groundY = h - CONFIG.GROUND_Y_OFFSET;
 
-        ctx.clearRect(0, 0, w, h);
+        ctx.save();
+
+        // Apply camera shake
+        if (this.cameraShake > 0) {
+            ctx.translate(this.cameraOffsetX, this.cameraOffsetY);
+        }
+
+        ctx.clearRect(-10, -10, w + 20, h + 20);
 
         // Sky gradient
         const palette = this.game.weather.getPalette();
@@ -1173,57 +1390,147 @@ class Renderer {
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, w, h);
 
-        // Sun
-        ctx.fillStyle = CONFIG.COLORS.SUN;
-        ctx.beginPath();
-        ctx.arc(w * 0.82, 65, 32, 0, Math.PI * 2);
-        ctx.fill();
+        // Sun with glow effect
+        this.drawSun(ctx, w);
 
-        // Simple dunes (parallax)
+        // Distant silhouettes (very far background)
+        this.drawDistantSilhouettes(ctx, w, h);
+
+        // 3-layer parallax dunes
         this.drawDunes(ctx, w, h, palette);
 
-        // Ground
+        // Ground with subtle texture
+        this.drawGround(ctx, w, h, groundY, palette);
+
+        ctx.restore();
+    }
+
+    drawSun(ctx, w) {
+        const sunX = w * 0.82;
+        const sunY = 65;
+        const sunRadius = 32;
+
+        // Outer glow
+        const glowGrad = ctx.createRadialGradient(sunX, sunY, sunRadius * 0.5, sunX, sunY, CONFIG.VISUALS.SUN_GLOW_RADIUS);
+        glowGrad.addColorStop(0, CONFIG.COLORS.SUN_GLOW);
+        glowGrad.addColorStop(1, 'rgba(255, 217, 61, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, CONFIG.VISUALS.SUN_GLOW_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sun core
+        ctx.fillStyle = CONFIG.COLORS.SUN;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    drawDistantSilhouettes(ctx, w, h) {
+        ctx.fillStyle = CONFIG.COLORS.SILHOUETTE;
+
+        const baseY = h * 0.38;
+        const offset = (this.scrollX * 0.03) % (w * 1.5);
+
+        for (const sil of this.silhouettes) {
+            const x = ((sil.x - offset) % (w + 200)) - 100;
+
+            ctx.beginPath();
+            if (sil.type === 0) {
+                // Rock silhouette
+                ctx.moveTo(x, baseY);
+                ctx.lineTo(x + sil.width * 0.3, baseY - sil.height);
+                ctx.lineTo(x + sil.width * 0.7, baseY - sil.height * 0.8);
+                ctx.lineTo(x + sil.width, baseY);
+            } else if (sil.type === 1) {
+                // Fort/tower silhouette
+                ctx.moveTo(x, baseY);
+                ctx.lineTo(x, baseY - sil.height * 0.6);
+                ctx.lineTo(x + sil.width * 0.2, baseY - sil.height * 0.6);
+                ctx.lineTo(x + sil.width * 0.2, baseY - sil.height);
+                ctx.lineTo(x + sil.width * 0.4, baseY - sil.height);
+                ctx.lineTo(x + sil.width * 0.4, baseY - sil.height * 0.6);
+                ctx.lineTo(x + sil.width, baseY - sil.height * 0.3);
+                ctx.lineTo(x + sil.width, baseY);
+            } else {
+                // Distant dune
+                ctx.moveTo(x, baseY);
+                ctx.quadraticCurveTo(x + sil.width * 0.5, baseY - sil.height, x + sil.width, baseY);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    drawDunes(ctx, w, h, palette) {
+        // Far dunes (slowest parallax)
+        ctx.fillStyle = 'rgba(244, 228, 193, 0.7)';
+        const offset1 = (this.scrollX * 0.05) % (w * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = -offset1; x <= w + 150; x += 120) {
+            const duneY = h * 0.35 + Math.sin((x + offset1) * 0.008) * 30;
+            ctx.lineTo(x, duneY);
+        }
+        ctx.lineTo(w + 150, h);
+        ctx.closePath();
+        ctx.fill();
+
+        // Mid dunes
+        ctx.fillStyle = CONFIG.COLORS.SAND_LIGHT;
+        const offset2 = (this.scrollX * 0.12) % (w * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = -offset2; x <= w + 100; x += 90) {
+            const duneY = h * 0.45 + Math.sin((x + offset2) * 0.012) * 25;
+            ctx.lineTo(x, duneY);
+        }
+        ctx.lineTo(w + 100, h);
+        ctx.closePath();
+        ctx.fill();
+
+        // Near dunes (fastest parallax)
+        ctx.fillStyle = palette.sand;
+        const offset3 = (this.scrollX * 0.25) % (w * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = -offset3; x <= w + 100; x += 70) {
+            const duneY = h * 0.58 + Math.sin((x + offset3) * 0.018) * 20;
+            ctx.lineTo(x, duneY);
+        }
+        ctx.lineTo(w + 100, h);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    drawGround(ctx, w, h, groundY, palette) {
+        // Ground gradient
         const groundGrad = ctx.createLinearGradient(0, groundY, 0, h);
         groundGrad.addColorStop(0, palette.sand);
         groundGrad.addColorStop(1, CONFIG.COLORS.SAND_DARK);
         ctx.fillStyle = groundGrad;
         ctx.fillRect(0, groundY, w, h - groundY);
 
-        // Ground line
+        // Subtle ground texture (small pebbles/variation)
+        const noiseOffset = (this.scrollX * 0.8) % 100;
+        ctx.fillStyle = 'rgba(139, 115, 85, 0.08)';
+        for (let x = -noiseOffset; x < w + 50; x += 25) {
+            const y = groundY + 5 + Math.sin(x * 0.3) * CONFIG.VISUALS.GROUND_NOISE_AMPLITUDE;
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Ground line with slight variation
         ctx.strokeStyle = CONFIG.COLORS.GROUND_LINE;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, groundY);
-        ctx.lineTo(w, groundY);
+        for (let x = 0; x <= w; x += 30) {
+            const variation = Math.sin((x + this.scrollX * 0.5) * 0.05) * 1;
+            ctx.lineTo(x, groundY + variation);
+        }
         ctx.stroke();
-    }
-
-    drawDunes(ctx, w, h, palette) {
-        // Far dunes
-        ctx.fillStyle = CONFIG.COLORS.SAND_LIGHT;
-        const offset1 = (this.scrollX * 0.08) % (w * 0.5);
-        ctx.beginPath();
-        ctx.moveTo(0, h);
-        for (let x = -offset1; x <= w + 100; x += 90) {
-            const duneY = h * 0.4 + Math.sin((x + offset1) * 0.012) * 25;
-            ctx.lineTo(x, duneY);
-        }
-        ctx.lineTo(w + 100, h);
-        ctx.closePath();
-        ctx.fill();
-
-        // Near dunes
-        ctx.fillStyle = palette.sand;
-        const offset2 = (this.scrollX * 0.25) % (w * 0.5);
-        ctx.beginPath();
-        ctx.moveTo(0, h);
-        for (let x = -offset2; x <= w + 100; x += 70) {
-            const duneY = h * 0.6 + Math.sin((x + offset2) * 0.018) * 20;
-            ctx.lineTo(x, duneY);
-        }
-        ctx.lineTo(w + 100, h);
-        ctx.closePath();
-        ctx.fill();
     }
 }
 
