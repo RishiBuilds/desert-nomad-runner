@@ -1,6 +1,6 @@
 # 🏜️ Desert Nomad
 
-> An endless runner game where a lone traveler navigates through dynamic desert weather conditions.
+> A minimal endless runner featuring a stickman traveler and dynamic weather that affects gameplay.
 
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
@@ -20,32 +20,59 @@ Simply open `index.html` in any modern browser to play!
 - **Auto-Running System** - Player continuously moves forward through the endless desert
 - **Responsive Controls** - Jump (Space/Tap) and Duck (↓/Swipe Down) mechanics
 - **Double Jump** - Extra jump while airborne for advanced maneuvers
-- **Progressive Difficulty** - Speed increases over time, obstacles appear more frequently
+- **Progressive Difficulty** - Speed increases over time with step-based tiers
 
 ### Dynamic Weather System
-The core innovation of Desert Nomad is a dynamic weather system that affects both visuals and gameplay:
+Weather isn't just visual — **it changes how you play**:
 
 | Weather | Visual Effect | Gameplay Effect |
 |---------|--------------|-----------------|
-| ☀️ Clear | Normal visibility | Standard physics |
-| 💨 Windy | Wind particles | Higher, floatier jumps with horizontal drift |
-| 🌡️ Heat Wave | Screen shimmer, warm sky | Subtle visual distortion |
-| 🌪️ Sandstorm | Reduced visibility, sand particles | Strong backward push, more tumbleweeds |
+| ☀️ **Clear** | Normal visibility | Baseline physics |
+| 🌬️ **Loo (Hot Wind)** | Dust particles, warm sky | Strong horizontal push, floatier jumps |
+| 🔥 **Heatwave** | Screen shimmer, orange tint | Weaker jumps, heavier gravity, slower legs |
+| 🌪️ **Sandstorm** | Low visibility, sand particles | Very strong wind push, requires earlier reactions |
 
-### 🌵 Hazards & Obstacles
+### 🌵 Obstacles
 - **Cacti** - Static obstacles (jump over)
-- **Rocks** - Jagged desert rocks (jump over)
-- **Snakes** - Fast-moving ground hazards
-- **Scorpions** - Animated threats with stinging tails
+- **Rocks** - Desert rocks (jump over)
 - **Tumbleweeds** - Flying obstacles (duck under!)
-- **Quicksand** - Slows movement until recovery jump
 
-### Visual Design
-- Minimalist desert aesthetic with warm color palette
-- Silhouetted player and obstacles for clean visual style
-- Three-layer parallax scrolling dunes
-- Glowing sun with radial gradient effects
-- Smooth animations and transitions
+---
+
+## � The Stickman Character
+
+Desert Nomad features a **minimal stickman** designed for maximum clarity and responsiveness.
+
+### Design Philosophy
+> "Clarity over realism"
+
+| Element | Implementation |
+|---------|---------------|
+| **Head** | Simple circle |
+| **Body** | Single vertical line |
+| **Arms** | Thin lines with swing animation |
+| **Legs** | Thin lines with procedural run cycle |
+
+### Procedural Animation
+All animation is calculated in real-time using sine waves — no sprites needed:
+
+| Animation | Description |
+|-----------|-------------|
+| **Run Cycle** | Sine-wave leg swing synced to game speed |
+| **Arm Swing** | Opposite phase to legs for natural balance |
+| **Jump Squash** | 0.85x vertical scale on takeoff |
+| **Land Stretch** | Up to 1.25x based on fall velocity |
+| **Wind Lean** | Body tilts into wind direction |
+
+### Weather Reactions
+The stickman **visually responds** to weather:
+
+| Weather | Character Response |
+|---------|-------------------|
+| **Clear** | Normal upright posture |
+| **Loo** | Leans into wind, faster leg animation |
+| **Heatwave** | Slower leg movement (exhaustion) |
+| **Sandstorm** | Strong forward lean |
 
 ---
 
@@ -56,7 +83,7 @@ The core innovation of Desert Nomad is a dynamic weather system that affects bot
 |-----|--------|
 | `Space` | Jump / Double Jump |
 | `↓` or `S` | Duck |
-| `Esc` | Pause |
+| `Esc` or `P` | Pause |
 
 ### Mobile
 | Gesture | Action |
@@ -71,34 +98,54 @@ The core innovation of Desert Nomad is a dynamic weather system that affects bot
 ```
 Desert Nomad/
 ├── index.html      # Game structure and UI overlays
-├── style.css       # Styling, animations, and responsive design
-├── game.js         # Game logic (modular class-based architecture)
+├── style.css       # Styling, animations, responsive design
+├── game.js         # Game logic (~900 lines, heavily commented)
 └── README.md       # This file
 ```
 
-### JavaScript Modules
+### JavaScript Classes
 
 | Class | Responsibility |
 |-------|---------------|
 | `Game` | Main controller, game loop, state management |
-| `Player` | Character physics, animation, and rendering |
-| `ObstacleManager` | Spawning, pooling, and collision detection |
-| `Obstacle` | Individual hazard entity with type-specific behavior |
-| `WeatherSystem` | Weather state machine, visual effects, gameplay modifiers |
-| `Renderer` | Background drawing, parallax scrolling, environment |
-| `InputHandler` | Keyboard and touch event handling |
-| `AudioManager` | Generated sound effects using Web Audio API |
+| `Player` | Stickman physics, procedural animation, weather reactions |
+| `ObstacleManager` | Spawning and collision detection |
+| `Obstacle` | Individual hazard with type-specific drawing |
+| `WeatherSystem` | Weather state machine, effects, gameplay modifiers |
+| `Renderer` | Background, parallax dunes, environment |
+| `InputHandler` | Keyboard and touch events |
+| `AudioManager` | Synthesized sounds via Web Audio API |
 
 ### Key Technical Features
-- **60 FPS Target** - Optimized game loop with delta time handling
-- **Object Pooling** - Efficient obstacle reuse
+- **60 FPS Target** - Optimized game loop with delta time
+- **Procedural Animation** - All motion calculated in real-time
+- **Minimal Draw Calls** - Simple shapes for performance
 - **Device Pixel Ratio** - Crisp rendering on high-DPI displays
 - **Responsive Design** - Adapts to any screen size
 - **Local Storage** - High score persistence
-- **No External Dependencies** - Pure HTML5/CSS/JavaScript
+- **No Dependencies** - Pure HTML5/CSS/JavaScript
+- **Beginner-Friendly Code** - Heavily commented for learning
 
 ---
 
+## Weather Gameplay Effects
+
+Each weather state **forces different timing**:
+
+```javascript
+WEATHER_EFFECTS: {
+    CLEAR:     { jumpMod: 1.0,  gravityMod: 1.0,  windForce: 0   },
+    LOO:       { jumpMod: 0.95, gravityMod: 0.9,  windForce: 4.0 },
+    HEATWAVE:  { jumpMod: 0.85, gravityMod: 1.15, windForce: 0.5 },
+    SANDSTORM: { jumpMod: 0.92, gravityMod: 1.0,  windForce: 5.5 }
+}
+```
+
+- **Loo**: Wind pushes you forward → jump earlier
+- **Heatwave**: Heavier gravity → jump earlier, reactions feel sluggish
+- **Sandstorm**: Strong push + low visibility → requires prediction
+
+---
 
 ## Quick Start
 
@@ -109,19 +156,22 @@ git clone https://github.com/RishiBuilds/desert-nomad-runner.git
 # Navigate to directory
 cd desert-nomad
 
-# Open in browser
+# Open in browser (macOS)
 open index.html
+
+# Or on Windows
+start index.html
 ```
+
 ---
 
 ## Future Enhancements
 
-- [ ] Power-ups (speed boost, shield, score multiplier)
+- [ ] Power-ups (speed boost, shield)
 - [ ] Day/night cycle
 - [ ] Achievement system
-- [ ] Leaderboard integration
 - [ ] More obstacle varieties
-- [ ] Camel alternative character
+- [ ] Sound toggle in HUD
 
 ---
 
@@ -133,7 +183,7 @@ Project Link: https://github.com/RishiBuilds/desert-nomad-runner
 
 ## License
 
-Distributed under the MIT License. Click [LICENSE](LICENSE) to view the full license text.
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
