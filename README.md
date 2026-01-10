@@ -39,7 +39,7 @@ Weather isn't just visual — **it changes how you play**:
 
 ---
 
-## � The Stickman Character
+## The Stickman Character
 
 Desert Nomad features a **minimal stickman** designed for maximum clarity and responsiveness.
 
