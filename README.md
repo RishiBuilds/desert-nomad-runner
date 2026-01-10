@@ -162,7 +162,6 @@ open index.html
 # Or on Windows
 start index.html
 ```
-
 ---
 
 ## Future Enhancements
