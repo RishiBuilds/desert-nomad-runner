@@ -116,14 +116,20 @@ Desert Nomad/
 | `AudioManager` | Synthesized sounds via Web Audio API |
 
 ### Key Technical Features
-- **60 FPS Target** - Optimized game loop with delta time
-- **Procedural Animation** - All motion calculated in real-time
-- **Minimal Draw Calls** - Simple shapes for performance
-- **Device Pixel Ratio** - Crisp rendering on high-DPI displays
-- **Responsive Design** - Adapts to any screen size
-- **Local Storage** - High score persistence
-- **No Dependencies** - Pure HTML5/CSS/JavaScript
-- **Beginner-Friendly Code** - Heavily commented for learning
+
+-**60 FPS Performance** – Deterministic game loop utilizing delta time for smooth, hardware-independent play.
+
+-**Procedural Animation** – Math-driven motion calculated in real-time for fluid, dynamic character physics.
+
+-**High-DPI Rendering** – Automatic Device Pixel Ratio scaling for razor-sharp visuals on Retina and 4K displays.
+
+-**Zero Dependencies** – Built with pure Vanilla JS/HTML5 Canvas for an ultra-lightweight, no-install footprint.
+
+-**Responsive Scaling** – Adaptive canvas architecture that maintains perfect aspect ratios across all devices.
+
+-**Local Persistence** – Integrated Web Storage API for high-score tracking and seamless session saving.
+
+-**Optimized Draw Calls** – Minimalist rendering pipeline designed for maximum frame stability and low CPU overhead.
 
 ---
 
