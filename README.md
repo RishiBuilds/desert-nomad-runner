@@ -7,7 +7,7 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Canvas API](https://img.shields.io/badge/Canvas%20API-FF6B6B?style=flat)](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
 
-## 🎮 Play Now
+## Play Now
 
 Simply open `index.html` in any modern browser to play!
 
@@ -26,12 +26,12 @@ Weather isn't just visual — **it changes how you play**:
 
 | Weather | Visual Effect | Gameplay Effect |
 |---------|--------------|-----------------|
-| ☀️ **Clear** | Normal visibility | Baseline physics |
-| 🌬️ **Loo (Hot Wind)** | Dust particles, warm sky | Strong horizontal push, floatier jumps |
-| 🔥 **Heatwave** | Screen shimmer, orange tint | Weaker jumps, heavier gravity, slower legs |
-| 🌪️ **Sandstorm** | Low visibility, sand particles | Very strong wind push, requires earlier reactions |
+|  **Clear** | Normal visibility | Baseline physics |
+|  **Loo (Hot Wind)** | Dust particles, warm sky | Strong horizontal push, floatier jumps |
+|  **Heatwave** | Screen shimmer, orange tint | Weaker jumps, heavier gravity, slower legs |
+|  **Sandstorm** | Low visibility, sand particles | Very strong wind push, requires earlier reactions |
 
-### 🌵 Obstacles
+### Obstacles
 - **Cacti** - Static obstacles (jump over)
 - **Rocks** - Desert rocks (jump over)
 - **Tumbleweeds** - Flying obstacles (duck under!)
@@ -197,6 +197,6 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 
 *Survive the endless desert • Adapt to changing weather • Run forever*
 
-*⭐ Star this repo if you enjoyed the game!*
+* Star this repo if you enjoyed the game!*
 
 </div>
